@@ -1,0 +1,187 @@
+#Task.2.4
+
+#start coding...
+#Import Datasets
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# datasets
+sift_path = "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/sift.tsv"
+foldX_path = "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/datasets/foldX.tsv"
+df_sift = pd.read_csv(sift_path, sep=r"\s+")
+df_foldX = pd.read_csv(foldX_path, sep=r"\s+")
+
+#Identifier
+df_sift['specific_Protein_aa'] = df_sift['Protein'].str.cat(df_sift['Amino_Acid'], sep='_')
+df_foldX['specific_Protein_aa'] = df_foldX['Protein'].str.cat(df_foldX['Amino_Acid'], sep='_')
+
+#Mergen of Datasets
+merged_df = pd.merge(df_sift[["Protein", "Amino_Acid", 'specific_Protein_aa', 'sift_Score']],
+                     df_foldX[['specific_Protein_aa', 'foldX_Score']],
+                     on='specific_Protein_aa')
+#Mutations Identification
+mutations_deleterious_df = merged_df.loc[(merged_df["sift_Score"] < 0.05) & (merged_df["foldX_Score"] > 2)]
+
+#Substitution of Amino acid
+frequency_table = {}
+for row in mutations_deleterious_df["Amino_Acid"]:
+    first_aa = row[0]
+    frequency_table[first_aa] = frequency_table.get(first_aa, 0) + 1
+
+#Creation of table
+keys = list(frequency_table.keys())
+values = list(frequency_table.values())
+
+#Data visualization
+plt.figure(figsize=(10, 6))
+plt.bar(keys, values, color='skyblue')
+plt.xlabel('Amino Acid')
+plt.ylabel('Frequency')
+plt.title('Frequency of Amino Acids')
+plt.savefig('Bar_plot_of_Frequency_of_Amino_Acids.png')
+plt.show()
+
+#Chart
+plt.figure(figsize=(8, 8))
+plt.pie(values, labels=keys, autopct='%1.1f%%', startangle=140)
+plt.title('Frequency of Amino Acids')
+plt.axis('equal')
+plt.savefig('Pie_chart_of_Frequency_of_Amino_Acids.png')
+plt.show()
+
+ #Task 2.6
+
+#start coding... 
+
+#Load the Dataset
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+#Dataset
+url_data = "https://gist.githubusercontent.com/stephenturner/806e31fce55a8b7175af/raw/1a507c4c3f9f1baaa3a69187223ff3d3050628d4/results.txt"
+gene_expression_df = pd.read_csv(url_data, sep=" ")
+ 
+#Compute mathematical set -log10(p-value)
+gene_expression_df['-log10_pvalue'] = -np.log10(gene_expression_df['pvalue'])
+
+#Analysis
+gene_expression_df['regulation'] = 'No'
+gene_expression_df.loc[(gene_expression_df['log2FoldChange'] > 1) & (gene_expression_df['pvalue'] < 0.01), 'regulation'] = 'Up'
+gene_expression_df.loc[(gene_expression_df['log2FoldChange'] < -1) & (gene_expression_df['pvalue'] < 0.01), 'regulation'] = 'Down'
+
+#Different Genes Expresssion
+upregulated_genes_df = gene_expression_df.loc[(gene_expression_df['log2FoldChange'] > 1) & (gene_expression_df['pvalue'] < 0.01)]
+upregulated_genes_list = upregulated_genes_df["Gene"].tolist()
+downregulated_genes_df = gene_expression_df.loc[(gene_expression_df['log2FoldChange'] < -1) & (gene_expression_df['pvalue'] < 0.01)]
+downregulated_genes_list = downregulated_genes_df["Gene"].tolist()
+
+#Data Visualization
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=gene_expression_df, x='log2FoldChange', y='-log10_pvalue', hue='regulation', palette={'Up': 'red', 'Down': 'blue', 'No': 'grey'})
+plt.axhline(y=-np.log10(0.01), color='r', linestyle='--', label='p = 0.01')
+plt.axvline(x=1, color='r', linestyle='--', label='log2FC = 1')
+plt.axvline(x=-1, color='r', linestyle='--', label='log2FC = -1')
+plt.title('Volcano Plot')
+plt.xlabel('log2(Fold Change)')
+plt.ylabel('-log10(p-value)')
+plt.legend(title='Gene Regulation')
+plt.show()
+
+
+
+#TASK 2.7
+
+#start coding... 
+
+#Load the Dataset
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+from scipy import stats
+
+data_path = "https://raw.githubusercontent.com/HackBio-Internship/public_datasets/main/R/nhanes.csv"
+df = pd.read_csv(data_path, sep=",")
+ 
+#Processing
+df_process = df.dropna()
+
+#Data Visualization BMI
+
+plt.figure(figsize=(10, 6))
+sns.histplot(df_process["BMI"], kde=True)
+plt.title('Histogram of BMI')
+plt.xlabel('BMI')
+plt.show()
+
+# Weight
+df_Weight = df.dropna(subset=["Weight"])
+plt.figure(figsize=(10, 6))
+sns.histplot(df_Weight["Weight"])
+plt.title('Histogram of Weight')
+plt.xlabel('Weight')
+plt.savefig('histogram_weight.png')
+plt.show()
+
+#Age
+df_Age = df.dropna(subset=["Age"])
+plt.figure(figsize=(10, 6))
+sns.histplot(df_Age["Age"])
+plt.title('Histogram of Age')
+plt.xlabel('Age')
+plt.savefig('histogram_age.png')
+plt.show()
+
+#weight
+df_Weight_in_Pounds = df.dropna(subset=["Weight"])
+df_Weight_in_Pounds = df["Weight"] * 2.2
+plt.figure(figsize=(10, 6))
+sns.histplot(df_Weight_in_Pounds, bins=20)
+plt.title('Histogram of Weight in Pounds')
+plt.xlabel('Weight in Pounds')
+plt.savefig('histogram_weight_in_pounds.png')
+plt.show()
+
+#Mean of Pulse
+mean_pulse = df["Pulse"].mean()
+mean_pulse_rounded = round(mean_pulse, 5)
+print(f"Mean Pulse (rounded to 5 decimal places): {mean_pulse_rounded}")
+
+
+#Blood Pressure
+max_BPDia = df["BPDia"].max()
+min_BPDia = df["BPDia"].min()
+print(f"Minimum Diastolic Blood Pressure: {min_BPDia}")
+print(f"Maximum Diastolic Blood Pressure: {max_BPDia}")
+
+
+#Descriptive Statistics
+describe_income = df["Income"].describe()
+income_std = describe_income['std']
+income_variance = df["Income"].var()
+income_std_rounded = round(income_std, 5)
+income_variance_rounded = round(income_variance, 5)
+print(f"Standard Deviation (std): {income_std_rounded}")
+print(f"Variance: {income_variance_rounded}")
+
+
+#Plots
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=df, x="Weight", y="Height", hue="Gender")
+plt.title('Scatterplot of Weight vs Height (Gender)')
+plt.xlabel('Weight')
+plt.ylabel('Height')
+plt.savefig('scatterplot_weight_vs_height_gender.png')
+plt.show()
+
+#Answers
+Mean Pulse (rounded to 5 decimal places): 73.63382
+Minimum Diastolic Blood Pressure: 0.0
+Maximum Diastolic Blood Pressure: 116.0
+Standard Deviation (std): 33489.76064
+Variance: 1121564067.88888
+
+
+https://www.linkedin.com/posts/saidu-abdulkadir-2643b924a_stage-2-channel-coding-for-bio-py-activity-7300882673995059200-2KxE?utm_source=share&utm_medium=member_desktop&rcm=ACoAAD2jvSwBroTXEPvHREuKtQjwifEb9iiyD74
+
