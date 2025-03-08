@@ -1,0 +1,196 @@
+ #ABDULKDIR SAIDU
+ #Elsaeed
+ #Hack_bio_coding_internship_program(2025)
+ #Task 3 Project
+
+Task 3, project 3, stage 3 (Question 2)
+
+import pandas as pd
+
+Step 1: Load and Inspect the Data
+First, let's load the dataset and look at its structure.
+
+# Load the data
+url = "https://raw.githubusercontent.com/PacktPublishing/Machine-Learning-in-Biotechnology-and-Life-Sciences/refs/heads/main/datasets/dataset_wisc_sd.csv"
+data = pd.read_csv(url)
+
+# Display basic information about the dataset
+print(data.info())
+print(data.head())
+
+Step 2: Preprocess the Data
+Next, we need to preprocess the data. This includes handling missing values, separating features from target labels, and standardizing the data.
+
+from sklearn.preprocessing import StandardScaler
+
+# Handle missing values (if any)
+data = data.dropna()
+
+# Separate features and target
+X = data.drop(columns=['diagnosis'])
+y = data['diagnosis']
+
+# ----> Convert all columns in X to numeric, handling errors
+for column in X.columns:
+    try:
+        X[column] = pd.to_numeric(X[column])
+    except ValueError:
+        # Handle the error, e.g., by dropping the column or imputing values
+        print(f"Error converting column '{column}'. Investigate further.")
+        # Example: Drop the column
+        X = X.drop(columns=[column])
+
+# Standardize the features
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)
+
+Step 3: Perform PCA
+Perform PCA to reduce the dimensionality of the dataset.
+
+from sklearn.decomposition import PCA
+
+# Perform PCA
+pca = PCA(n_components=2)
+X_pca = pca.fit_transform(X_scaled)
+
+# Add PCA results to a DataFrame
+pca_df = pd.DataFrame(X_pca, columns=['PCA1', 'PCA2'])
+pca_df['diagnosis'] = y.reset_index(drop=True)
+
+Step 4: K-Means Clustering
+Use K-Means clustering to classify and cluster the patients.
+
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
+# Perform K-Means clustering
+kmeans = KMeans(n_clusters=2, random_state=42)
+kmeans.fit(X_pca)
+labels = kmeans.labels_
+
+Step 5: Analyze Subclasses
+Finally, analyze whether there might be other subclasses within the dataset by visualizing the clusters and the diagnosis labels.
+
+# Add cluster labels to the DataFrame
+pca_df['cluster'] = labels
+
+# Plot the PCA results with cluster labels
+plt.scatter(pca_df['PCA1'], pca_df['PCA2'], c=pca_df['cluster'], cmap='viridis')
+plt.xlabel('PCA1')
+plt.ylabel('PCA2')
+plt.title('PCA with K-Means Clustering')
+plt.show()
+
+Analysis
+By comparing the plot of PCA with K-Means clustering and the plot of PCA with actual diagnosis labels, you can analyze how well the K-Means clusters correspond to the actual benign and malignant diagnoses.
+
+Additionally, observe the dispersion and distribution of data points in the PCA plot. If there are noticeable clusters or patterns within the benign or malignant groups, it may indicate the presence of other subclasses within the dataset.
+
+
+
+Task 3. project 3 and stage 3 (Question 6)
+
+Step 1: Load and Inspect the Data
+First, let's load the data and inspect its structure.
+
+import pandas as pd
+
+# Load the data
+url = "https://github.com/HackBio-Internship/2025_project_collection/raw/refs/heads/main/Python/Dataset/drug_class_struct.txt"
+data = pd.read_csv(url, delimiter='\t')
+
+# Display basic information about the dataset
+print(data.info())
+print(data.head())
+
+from sklearn.decomposition import PCA
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import LabelEncoder
+
+# Extract features and docking scores
+features = data.drop(columns=['score'])
+scores = data['score']
+
+# Identify and convert string columns to numerical using Label Encoding
+for column in features.columns:
+    if features[column].dtype == 'object':  # Check if column is of type object (string)
+        label_encoder = LabelEncoder()
+        features[column] = label_encoder.fit_transform(features[column])  # Encode string values to numerical labels
+
+# Perform PCA
+pca = PCA(n_components=2)
+pca_features = pca.fit_transform(features)
+
+# Perform K-Means clustering
+kmeans = KMeans(n_clusters=3, random_state=42)
+clusters = kmeans.fit_predict(pca_features)
+
+# Plot the chemical space with clusters
+plt.scatter(pca_features[:, 0], pca_features[:, 1], c=clusters, cmap='viridis')
+plt.colorbar()
+plt.xlabel('PCA Component 1')
+plt.ylabel('PCA Component 2')
+plt.title('Chemical Space with K-Means Clusters')
+plt.show()
+
+Step 2: Perform PCA and K-Means Clustering
+Perform PCA to reduce the dimensionality of the dataset and K-Means clustering to classify the compounds.
+
+import numpy as np
+
+# Plot the chemical space with docking scores
+plt.scatter(pca_features[:, 0], pca_features[:, 1], c=scores, cmap='coolwarm')
+plt.colorbar()
+plt.xlabel('PCA Component 1')
+plt.ylabel('PCA Component 2')
+plt.title('Chemical Space Colored by Docking Score')
+plt.show()
+
+Step 3: Color the Chemical Spaces by Docking Score
+Plot the PCA results and color the points by their docking score.
+
+# Combine PCA features, clusters, and docking scores into a DataFrame
+pca_df = pd.DataFrame(pca_features, columns=['PCA1', 'PCA2'])
+pca_df['cluster'] = clusters
+pca_df['score'] = scores
+
+# Calculate the mean docking score for each cluster
+cluster_means = pca_df.groupby('cluster')['score'].mean()
+print(cluster_means)
+
+Step 4: Identify Sub Clusters with Lower Docking Scores
+Analyze the clusters to identify if there are sub clusters that have a preferentially lower docking score.
+
+# Identify the cluster with the lowest mean docking score
+lowest_score_cluster = cluster_means.idxmin()
+print(f'Cluster with lowest mean docking score: {lowest_score_cluster}')
+
+# Filter the DataFrame to include only the compounds in the lowest scoring cluster
+lowest_score_cluster_df = pca_df[pca_df['cluster'] == lowest_score_cluster]
+print(lowest_score_cluster_df.head())
+
+Step 5: Predict the Docking Score Using Regression Algorithms
+Build a regression model to predict the docking score using the chemical features
+
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_squared_error
+
+# Split the data into training and testing sets
+X_train, X_test, y_train, y_test = train_test_split(features, scores, test_size=0.2, random_state=42)
+
+# Train the regression model
+model = RandomForestRegressor(random_state=42)
+model.fit(X_train, y_train)
+
+# Predict the docking scores on the test set
+y_pred = model.predict(X_test)
+
+# Calculate the mean squared error
+mse = mean_squared_error(y_test, y_pred)
+print(f'Mean Squared Error: {mse}')
+
+Analysis and Interpretation
+By performing PCA and K-Means clustering, you can visualize the chemical space and identify clusters of compounds. By coloring the points by their docking score, you can identify sub clusters that preferentially have lower docking scores. The regression model allows you to predict the docking score based on the chemical features alone.
+
